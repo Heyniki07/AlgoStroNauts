@@ -19,7 +19,11 @@ pm_type = st.sidebar.selectbox("PM Concentration Type", ["PM2.5", "PM10", "NO2",
 st.sidebar.markdown("---")
 generate = st.sidebar.button("Generate Spatial Map")
 
-# Mock prediction data
+# Initialize session state for map data
+if "map_data" not in st.session_state:
+    st.session_state.map_data = None
+
+# Function to create mock data
 def generate_mock_data(center_lat, center_lon):
     lats = np.linspace(center_lat - 0.05, center_lat + 0.05, 5)
     lons = np.linspace(center_lon - 0.05, center_lon + 0.05, 5)
@@ -30,13 +34,16 @@ def generate_mock_data(center_lat, center_lon):
             data.append({"lat": lat, "lon": lon, "pm": round(value, 1)})
     return pd.DataFrame(data)
 
+# When generate is clicked, store map data
 if generate:
     st.success(f"Generated mock {pm_type} spatial map for {area_name} ({time_of_day})")
-
     df = generate_mock_data(latitude, longitude)
-    m = folium.Map(location=[latitude, longitude], zoom_start=12)
+    st.session_state.map_data = df
 
-    for _, row in df.iterrows():
+# Display map if available
+if st.session_state.map_data is not None:
+    m = folium.Map(location=[latitude, longitude], zoom_start=12)
+    for _, row in st.session_state.map_data.iterrows():
         color = "green" if row["pm"] < 60 else "orange" if row["pm"] < 100 else "red"
         folium.CircleMarker(
             location=[row["lat"], row["lon"]],
